@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main class="weather-card">
+        <div class="top-label">WEATHER FORECAST</div>
+
+        <h1>Weather App</h1>
+        <p class="subtitle">Discover the weather in any city</p>
+
+        <form id="weather-form">
+            <input
+                type="text"
+                id="city-input"
+                placeholder="Enter city, e.g. Baku"
+                aria-label="City name"
+                required
+            >
+            <button type="submit">Search</button>
+        </form>
+
+        <p id="message" role="status">Enter a city to see its weather.</p>
+
+        <section id="weather-result" class="weather-result hidden">
+            <p id="location" class="location"></p>
+            <div class="temperature">
+                <span id="temperature">--</span><span>°C</span>
+            </div>
+            <p id="description" class="description"></p>
+            <p id="feels-like" class="feels-like"></p>
+
+            <div class="details">
+                <div class="detail-box">
+                    <span class="detail-icon">💧</span>
+                    <p class="detail-label">Humidity</p>
+                    <p id="humidity" class="detail-value">--%</p>
+                </div>
+                <div class="detail-box">
+                    <span class="detail-icon">💨</span>
+                    <p class="detail-label">Wind speed</p>
+                    <p id="wind" class="detail-value">-- km/h</p>
+                </div>
+            </div>
+
+            <p id="updated" class="updated"></p>
+        </section>
+
+        <footer>Weather data provided by Open-Meteo</footer>
+    </main>
+
+    <script>
+        const form = document.getElementById("weather-form");
+        const cityInput = document.getElementById("city-input");
+        const message = document.getElementById("message");
+        const result = document.getElementById("weather-result");
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const city = cityInput.value.trim();
+
+            if (!city) {
+                message.textContent = "Please enter a city name.";
+                result.classList.add("hidden");
+                return;
+            }
+
+            message.textContent = "Loading weather...";
+            result.classList.add("hidden");
+
+            try {
+                const response = await fetch(
+                    `/api/weather?city=${encodeURIComponent(city)}`
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Something went wrong.");
+                }
+
+                document.getElementById("location").textContent =
+                    data.city + (data.country ? ", " + data.country : "");
+
+                document.getElementById("temperature").textContent =
+                    Math.round(data.temperature);
+
+                document.getElementById("description").textContent =
+                    data.description;
+
+                document.getElementById("feels-like").textContent =
+                    "Feels like " + Math.round(data.feels_like) + "°C";
+
+                document.getElementById("humidity").textContent =
+                    data.humidity + "%";
+
+                document.getElementById("wind").textContent =
+                    data.wind + " km/h";
+
+                document.getElementById("updated").textContent =
+                    "Local time: " + data.updated;
+
+                message.textContent = "";
+                result.classList.remove("hidden");
+            } catch (error) {
+                message.textContent = error.message;
+            }
+        });
+    </script>
+</body>
+</html>
